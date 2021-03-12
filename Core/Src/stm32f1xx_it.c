@@ -308,30 +308,30 @@ void USART1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART3 global interrupt.
+  * @brief This function handles USART2 global interrupt.
   */
-void USART3_IRQHandler(void)
+void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART3_IRQn 0 */
-	if ( (USART3->SR & USART_SR_TXE) != 0 ) //if(LL_USART_IsActiveFlag_TXE(USART2)) //прерывание по передачи
-		{
-			if (bufferUart2.tx_counter > 0) //если есть что передать
-		    {
-		      --bufferUart2.tx_counter; // уменьшаем количество не переданных данных
-		      //LL_USART_TransmitData8(USART3,tx_buffer[tx_rd_index++]);
-		      USART3->DR = bufferUart2.tx_buffer[bufferUart2.tx_rd_index++]; //передаем данные инкрементируя хвост буфера
-		      if (bufferUart2.tx_rd_index == TX_BUFFER_SIZE) bufferUart2.tx_rd_index=0; //идем по кругу
-		    }
-		    else //если нечего передать, запрещаем прерывание по передачи
-		    {
-		    	USART3->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
-		    	//LL_USART_DisableIT_TXE(USART2);
-		    }
-		}
-  /* USER CODE END USART3_IRQn 0 */
-  /* USER CODE BEGIN USART3_IRQn 1 */
+  /* USER CODE BEGIN USART2_IRQn 0 */
+	if ( (USART2->SR & USART_SR_TXE) != 0 ) //if(LL_USART_IsActiveFlag_TXE(USART2)) //прерывание по передачи
+	{
+		if (bufferUart2.tx_counter > 0) //если есть что передать
+	    {
+	      --bufferUart2.tx_counter; // уменьшаем количество не переданных данных
+	      //LL_USART_TransmitData8(USART3,tx_buffer[tx_rd_index++]);
+	      USART2->DR = bufferUart2.tx_buffer[bufferUart2.tx_rd_index++]; //передаем данные инкрементируя хвост буфера
+	      if (bufferUart2.tx_rd_index == TX_BUFFER_SIZE) bufferUart2.tx_rd_index=0; //идем по кругу
+	    }
+	    else //если нечего передать, запрещаем прерывание по передачи
+	    {
+	    	USART2->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
+	    	//LL_USART_DisableIT_TXE(USART2);
+	    }
+	}
+  /* USER CODE END USART2_IRQn 0 */
+  /* USER CODE BEGIN USART2_IRQn 1 */
 
-  /* USER CODE END USART3_IRQn 1 */
+  /* USER CODE END USART2_IRQn 1 */
 }
 
 /**

@@ -74,6 +74,22 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define on_off_Pin LL_GPIO_PIN_0
+#define on_off_GPIO_Port GPIOA
+#define ffonotrau_Pin LL_GPIO_PIN_15
+#define ffonotrau_GPIO_Port GPIOB
+#define Enroll_button_Pin LL_GPIO_PIN_11
+#define Enroll_button_GPIO_Port GPIOA
+#define Enroll_Pin LL_GPIO_PIN_3
+#define Enroll_GPIO_Port GPIOB
+#define Fault_Pin LL_GPIO_PIN_4
+#define Fault_GPIO_Port GPIOB
+#define Charge_Pin LL_GPIO_PIN_5
+#define Charge_GPIO_Port GPIOB
+#define Disacharge_Pin LL_GPIO_PIN_6
+#define Disacharge_GPIO_Port GPIOB
+#define Battery_Level_Pin LL_GPIO_PIN_7
+#define Battery_Level_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */
