@@ -223,7 +223,7 @@ void Balansir_handler()
 	{
 		if(CellsDatabase[i].Voltage>(MAX_VOLTAGE+DEBAUNCE+DEBAUNCE_FAIL))
 		{
-			Output_OFF();
+			//Output_OFF();
 			OverChargeStatus=1;
 			logDebugD("OverCharge B",i+1,0);
 		}
@@ -236,7 +236,7 @@ void Balansir_handler()
 
 	if((OverChargeStatus==1)&&(RestoreVoltageBeforeUmax == i)&&(OverDisChargeStatus==0)&&(CurrentShortStatus==0))
 	{
-		Output_ON();
+		//Output_ON();
 		OverChargeStatus=0;
 		logDebug("No OverCharge - Output_ON");
 	}
@@ -270,14 +270,14 @@ void MinVoltage_handler()
 			if((time_sec-CellsDatabase[i].TimeSec)>CELLS_MIN_VOLTAGE_TIMER_OFF_SEC)
 			{
 				OverDisChargeStatus = 1;
-				Output_OFF();
+				//Output_OFF();
 				logDebugD("OFF. Min voltage ",i+1,0);
 			}
 	}
 
 	if((OverDisChargeStatus==1)&&(RestoreVoltageonCells==i)&&(OverChargeStatus==0)&&(CurrentShortStatus==0))
 	{
-		Output_ON();
+		//Output_ON();
 		OverDisChargeStatus=0;
 		logDebugD("ON. B V > min V ",i+1,0);
 	}
@@ -296,7 +296,7 @@ void RestoreAfterCurrentShort()
 		CurrentShortTimer++;
 	if ((CurrentShortTimer>5)&&(OverChargeStatus==0)&&(OverDisChargeStatus==0))
 	{
-		Output_ON();
+		//Output_ON();
 		CurrentShortTimer=0;
 		CurrentShortStatus = 0;
 	}
@@ -431,7 +431,7 @@ void SysTick_Callback()//1 mc
 
 
 
-		GPIOB->BSRR =  GPIO_BSRR_BS9;
+
 		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS4;
 		else GPIOB->BSRR =  GPIO_BSRR_BR4;
 
@@ -441,8 +441,14 @@ void SysTick_Callback()//1 mc
 		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS7;
 		else GPIOB->BSRR =  GPIO_BSRR_BR7;
 
-		//if (time_sec%10==0) Output_ON();
-		//if (time_sec%15==0) Output_OFF();
+		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS8;
+		else GPIOB->BSRR =  GPIO_BSRR_BR8;
+
+
+
+
+		if (time_sec%10==0) Output_ON();
+		if (time_sec%15==0) Output_OFF();
 	}
 	Count10mSecond++;
 	Count100mSecond++;
@@ -768,7 +774,7 @@ int main(void)
 
  	delay_ms(100);
     GPIOC->BSRR =  GPIO_BSRR_BS13;//ON CPU
-    GPIOB->BSRR =  GPIO_BSRR_BS8;//12 V for Mosfet
+    //GPIOB->BSRR =  GPIO_BSRR_BS8;//12 V for Mosfet
     logDebug("System ON");
 
 
@@ -806,7 +812,7 @@ int main(void)
    logInfo(Version);
    delay_ms(1000);
 
-   Output_ON();
+   //Output_ON();
    logDebug("OUTPUT ON");
    //printToBufferUART1("Hello");
 
