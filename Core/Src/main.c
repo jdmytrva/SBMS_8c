@@ -1252,7 +1252,7 @@ static void MX_USART3_UART_Init(void)
   LL_USART_ConfigAsyncMode(USART3);
   LL_USART_Enable(USART3);
   /* USER CODE BEGIN USART3_Init 2 */
-
+  LL_USART_EnableIT_TXE(USART3);
   /* USER CODE END USART3_Init 2 */
 
 }

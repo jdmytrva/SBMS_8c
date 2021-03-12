@@ -216,7 +216,7 @@ uint8_t getCharFromBufferUART1(void) //прием данных
 
 
 
-//UART2===========================================================
+//UART3===========================================================
 
 
 void printToBufferUART2(volatile char* str)//10us for one char 24Mgz
@@ -224,7 +224,7 @@ void printToBufferUART2(volatile char* str)//10us for one char 24Mgz
 	//while (bufferUart2.tx_counter >= TX_BUFFER_SIZE-30); //если буфер переполнен, ждем
 
 	//LL_USART_DisableIT_TXE(USART2); //запрещаем прерывание, чтобы оно не мешало менять переменную
-	USART2->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
+	USART3->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
 
 	while (*str != 0)
 	{
@@ -245,7 +245,7 @@ void printToBufferUART2(volatile char* str)//10us for one char 24Mgz
 	#endif
 
 	//LL_USART_EnableIT_TXE(USART2); //разрешаем прерывание
-	USART2->CR1 |= USART_CR1_TXEIE;// Interrupt enable
+	USART3->CR1 |= USART_CR1_TXEIE;// Interrupt enable
 }
 
 
@@ -254,7 +254,7 @@ void printToBufferWithoutEndUART2(volatile char* str)//10us for one char 24Mgz
 	//while (bufferUart2.tx_counter >= TX_BUFFER_SIZE-30); //если буфер переполнен, ждем
 
 	//LL_USART_DisableIT_TXE(USART2); //запрещаем прерывание, чтобы оно не мешало менять переменную
-	USART2->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
+	USART3->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
 
 	while (*str != 0)
 	{
@@ -267,7 +267,7 @@ void printToBufferWithoutEndUART2(volatile char* str)//10us for one char 24Mgz
 		#endif
 
 	}
-	USART2->CR1 |= USART_CR1_TXEIE;// Interrupt enable
+	USART3->CR1 |= USART_CR1_TXEIE;// Interrupt enable
 }
 
 void printToBufferUART2D(volatile char* str, volatile int32_t value, volatile uint8_t koma) //10us for one char + 6us for one digit 24Mgz
@@ -281,7 +281,7 @@ void printToBufferUART2D(volatile char* str, volatile int32_t value, volatile ui
 	//while (bufferUart2.tx_counter >= TX_BUFFER_SIZE-30); //если буфер переполнен, ждем
 
 	//LL_USART_DisableIT_TXE(USART2); //запрещаем прерывание, чтобы оно не мешало менять переменную
-	USART2->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
+	USART3->CR1 &= ~USART_CR1_TXEIE;  // Interrupt Disable
 
 	while (*str != 0)
 	{
@@ -316,7 +316,7 @@ void printToBufferUART2D(volatile char* str, volatile int32_t value, volatile ui
 	#endif
 
 	//LL_USART_EnableIT_TXE(USART2); //разрешаем прерывание
-	USART2->CR1 |= USART_CR1_TXEIE;// Interrupt enable
+	USART3->CR1 |= USART_CR1_TXEIE;// Interrupt enable
 }
 
 
@@ -358,7 +358,7 @@ void Print_to_USART2_d(volatile int32_t value,volatile char *string,uint8_t koma
 void putCharInBufferUart2(uint8_t c) //вывод данных
 {
 	//while (bufferUart2.tx_counter >= TX_BUFFER_SIZE); //если буфер переполнен, ждем
-	LL_USART_DisableIT_TXE(USART2); //запрещаем прерывание, чтобы оно не мешало менять переменную
+	LL_USART_DisableIT_TXE(USART3); //запрещаем прерывание, чтобы оно не мешало менять переменную
 	bufferUart2.tx_buffer[bufferUart2.tx_wr_index++]=c; //то кладем данные в буфер
 	if (bufferUart2.tx_wr_index == TX_BUFFER_SIZE)
 		bufferUart2.tx_wr_index=0; //идем по кругу
@@ -368,7 +368,7 @@ void putCharInBufferUart2(uint8_t c) //вывод данных
 			bufferUart2.tx_buffer_overflow = bufferUart2.tx_counter;
 	#endif
 
-	LL_USART_EnableIT_TXE(USART2); //разрешаем прерывание
+	LL_USART_EnableIT_TXE(USART3); //разрешаем прерывание
 
 }
 void putStringInBufferUart2(volatile char *s)
@@ -379,8 +379,8 @@ void putStringInBufferUart2(volatile char *s)
 
 void putCharDirectToUart2(uint8_t c)
 {
-	while (!LL_USART_IsActiveFlag_TXE(USART2));
-	LL_USART_TransmitData8(USART2, c);
+	while (!LL_USART_IsActiveFlag_TXE(USART3));
+	LL_USART_TransmitData8(USART3, c);
 	c++;
 }
 
