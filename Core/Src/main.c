@@ -441,8 +441,8 @@ void SysTick_Callback()//1 mc
 		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS7;
 		else GPIOB->BSRR =  GPIO_BSRR_BR7;
 
-		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS8;
-		else GPIOB->BSRR =  GPIO_BSRR_BR8;
+		//if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS8;
+		//else GPIOB->BSRR =  GPIO_BSRR_BR8;
 
 
 
@@ -561,10 +561,20 @@ void adc_func()
 }
 
 
+//PACKAGE_BEGIN
+//[0]LEN -  Number of data bytes · Not including LEN byte · Including CS and EOM
+//[1]Command - Read Write Exec
+//[2]Screen
+//[] Data - several bytes
+//[] CS · Checksum is a sum up of all bytes within the message frame · Sum is computed in an 8-bit counter · CS and EOM are not included in the checksum
+//[] EOM End of Message 1 0x0A
+
 #define READ_DATA 0xFA
 #define WRITE_DATA 0xFB
 #define COMMAND_EXEC 0xFC
 
+//READ_DATA
+#define SYSTEM_INFO 8
 #define SETTINGS_SCREEN 10
 #define MAIN_SCREEN 20
 #define CHARGE_SCREEN 30
@@ -576,6 +586,18 @@ void adc_func()
 #define FACTORY_SCREEN 90
 
 #define DATALENGTH_MAX 30
+struct MasterSlave_struct
+{
+	volatile uint8_t Package[DATALENGTH_MAX];
+	volatile uint8_t Data_length;
+	volatile uint8_t DataCRC;
+	volatile uint8_t DataCRC_Calc;
+	volatile uint8_t ReadWriteCommand;
+};
+
+struct MasterSlave_struct Slave;
+struct MasterSlave_struct Master;
+
 struct RequestFromClientToSrv_struct
 {
 	volatile uint8_t Data_length;
@@ -594,14 +616,81 @@ struct AnswerFromSrvToClient_struct
 struct RequestFromClientToSrv_struct RequestFromClientToSrv;
 struct AnswerFromSrvToClient_struct  AnswerFromSrvToClient;
 
-
-void TIM7_Callback()
+void MainScreenAnswer()
 {
 	uint16_t var_16=0;
 	int8_t *arrayPointer_16 = (uint8_t*) &var_16;
 
 	uint16_t var_u16=0;
 	int8_t *arrayPointer_u16 = (uint8_t*) &var_u16;
+	arrayPointer_u16 = (uint8_t*) &Battery.Voltage;
+	Master.Package[4]=arrayPointer_u16[0];
+	Master.Package[5]=arrayPointer_u16[1];
+
+	arrayPointer_16 = (uint8_t*) &Battery.Current;
+	Master.Package[6]=arrayPointer_16[0];
+	Master.Package[7]=arrayPointer_16[1];
+
+	arrayPointer_u16 = (uint8_t*) &CellsDatabase[0].Voltage;
+	Master.Package[8]=arrayPointer_u16[0];
+	Master.Package[9]=arrayPointer_u16[1];
+
+	arrayPointer_u16 = (uint8_t*) &CellsDatabase[1].Voltage;
+	Master.Package[10]=arrayPointer_u16[0];
+	Master.Package[11]=arrayPointer_u16[1];
+
+	arrayPointer_u16 = (uint8_t*) &CellsDatabase[2].Voltage;
+	Master.Package[12]=arrayPointer_u16[0];
+	Master.Package[13]=arrayPointer_u16[1];
+
+	arrayPointer_u16 = (uint8_t*) &CellsDatabase[3].Voltage;
+	Master.Package[14]=arrayPointer_u16[0];
+	Master.Package[15]=arrayPointer_u16[1];
+
+	Master.Package[16]=95;
+
+	Master.Package[17]=On_off;
+
+	Master.Data_length = 19-1;
+
+	Master.Package[0] = PACKAGE_BEGIN;
+	Master.Package[1] = Master.Data_length;
+	Master.Package[2] = READ_DATA;
+	Master.Package[3] = MAIN_SCREEN;
+	Master.DataCRC = calcCRC(Master.Package, Master.Data_length, 0);
+	Master.Package[18] = Master.DataCRC;
+	Master.Package[19] = 0x0A;
+	putDataInBufferUart1(Master.Package,Master.Data_length+2);
+}
+
+void SystemInfoAnswer()
+{
+	Master.Package[4]=1;
+	Master.Package[5]=2;
+	Master.Package[6]=1;// 1- LIFEPO4, 2 - LIon
+	Master.Package[7]=4;//Number of cells
+	Master.Package[8]=0;
+	Master.Package[9]=0;
+	Master.Package[10]=0;
+	Master.Package[11]=0;
+	Master.Package[12]=0;
+	Master.Package[13]=0;
+
+	Master.Data_length = 15-1;
+
+	Master.Package[0] = PACKAGE_BEGIN;
+	Master.Package[1] = Master.Data_length;
+	Master.Package[2] = READ_DATA;
+	Master.Package[3] = SYSTEM_INFO;
+	Master.DataCRC = calcCRC(Master.Package, Master.Data_length, 0);
+	Master.Package[14] = Master.DataCRC;
+	Master.Package[15] = 0x0A;
+	putDataInBufferUart1(Master.Package,Master.Data_length+2);
+}
+
+void TIM7_Callback()
+{
+
 	//logDebugD("l=",bufferUart1.rx_counter,0);
 	//logDebugD("Le=",ParsingData.IsPassedPackageLengthFlag,0);
 	//logDebugD("PB=",ParsingData.IsPassedPackageBeginFlag,0);
@@ -614,98 +703,44 @@ void TIM7_Callback()
 			logDebug("PACKAGE_BEGIN");
 			//logDebugD("l=",bufferUart1.rx_counter,0);
 
-			RequestFromClientToSrv.Data_length = getCharFromBufferUART1();
-			uint8_t ReadWriteCommand;
-			ReadWriteCommand = getCharFromBufferUART1();
-			if (ReadWriteCommand == READ_DATA)
+			Slave.Data_length = getCharFromBufferUART1();
+			Slave.Package[0] = PACKAGE_BEGIN;
+			Slave.Package[1] = Slave.Data_length;
+			if (Slave.Data_length <= DATALENGTH_MAX)
 			{
-				logDebug("READ_DATA");
-				//logDebugD("l=",bufferUart1.rx_counter,0);
-
-				if (RequestFromClientToSrv.Data_length <= DATALENGTH_MAX)
+				uint8_t i=0;
+				for(i = 2; i<=Slave.Data_length+1;i++)
 				{
-					RequestFromClientToSrv.DataCRC = getCharFromBufferUART1();
-					uint8_t i=0;
-					for(i = 0; i < RequestFromClientToSrv.Data_length-4; i++)
+					Slave.Package[i] = getCharFromBufferUART1();
+					logDebugD("",Slave.Package[i],0)
+				}
+				Slave.DataCRC = Slave.Package[i-2];
+				//logDebugD("CRC1",Slave.Package[i-2],0);
+				//logDebugD("CRC2",Slave.Package[i-1],0);
+				Slave.DataCRC_Calc = calcCRC(Slave.Package, Slave.Data_length, 0);
+				if (Slave.DataCRC_Calc == Slave.DataCRC)
+				{
+					logDebug("CRC OK");
+					if (Slave.Package[2] == READ_DATA)
 					{
-						RequestFromClientToSrv.Data[i] = getCharFromBufferUART1();
-					}
-					RequestFromClientToSrv.DataCRC_Calc = calcCRC(RequestFromClientToSrv.Data, RequestFromClientToSrv.Data_length-4, 0);
-					if (RequestFromClientToSrv.DataCRC_Calc == RequestFromClientToSrv.DataCRC)
-					{
-						logDebug("CRC OK");
-						//logDebugD("l=",bufferUart1.rx_counter,0);
-						uint8_t id=0;
-						for (id=0;id < RequestFromClientToSrv.Data_length-4;id++)
-						{
-							logDebugD("",RequestFromClientToSrv.Data[id],0);
-						}
-
-						if(RequestFromClientToSrv.Data[0] == MAIN_SCREEN)
+						logDebug("READ Command");
+						if(Slave.Package[3] == MAIN_SCREEN)
 						{
 							logDebug("MAIN_SCREEN");
-
-							arrayPointer_u16 = (uint8_t*) &Battery.Voltage;
-							AnswerFromSrvToClient.Data[0]=arrayPointer_u16[0];
-							AnswerFromSrvToClient.Data[1]=arrayPointer_u16[1];
-
-							arrayPointer_16 = (uint8_t*) &Battery.Current;
-							AnswerFromSrvToClient.Data[2]=arrayPointer_16[0];
-							AnswerFromSrvToClient.Data[3]=arrayPointer_16[1];
-
-							arrayPointer_u16 = (uint8_t*) &CellsDatabase[0].Voltage;
-							AnswerFromSrvToClient.Data[4]=arrayPointer_u16[0];
-							AnswerFromSrvToClient.Data[5]=arrayPointer_u16[1];
-
-							arrayPointer_u16 = (uint8_t*) &CellsDatabase[1].Voltage;
-							AnswerFromSrvToClient.Data[6]=arrayPointer_u16[0];
-							AnswerFromSrvToClient.Data[7]=arrayPointer_u16[1];
-
-							arrayPointer_u16 = (uint8_t*) &CellsDatabase[2].Voltage;
-							AnswerFromSrvToClient.Data[8]=arrayPointer_u16[0];
-							AnswerFromSrvToClient.Data[9]=arrayPointer_u16[1];
-
-							arrayPointer_u16 = (uint8_t*) &CellsDatabase[3].Voltage;
-							AnswerFromSrvToClient.Data[10]=arrayPointer_u16[0];
-							AnswerFromSrvToClient.Data[11]=arrayPointer_u16[1];
-
-							AnswerFromSrvToClient.Data[12]=95;
-
-							AnswerFromSrvToClient.Data[13]=On_off;
-
-							AnswerFromSrvToClient.Data_length = 14+4;
-							AnswerFromSrvToClient.DataCRC = calcCRC(AnswerFromSrvToClient.Data, AnswerFromSrvToClient.Data_length-4, 0);
-							AnswerFromSrvToClient.Package[0] = PACKAGE_BEGIN;
-							AnswerFromSrvToClient.Package[1] = AnswerFromSrvToClient.Data_length;
-							AnswerFromSrvToClient.Package[2] = READ_DATA;
-							AnswerFromSrvToClient.Package[3] = AnswerFromSrvToClient.DataCRC;
-							uint8_t j=0;
-							for(i=0,j=4; i<AnswerFromSrvToClient.Data_length-4; i++,j++ )
-							{
-								AnswerFromSrvToClient.Package[j] = AnswerFromSrvToClient.Data[i];
-							}
-							putDataInBufferUart1(AnswerFromSrvToClient.Package,AnswerFromSrvToClient.Data_length);
+							MainScreenAnswer();
 						}
+						if(Slave.Package[3] == SYSTEM_INFO)
+						{
+							logDebug("SYSTEM_INFO");
+							SystemInfoAnswer();
+						}
+
 					}
-					//putDataInBufferUart1(RequestFromClientToSrv.Data,RequestFromClientToSrv.Data_length);
-				}
-			}
-
-			if (ReadWriteCommand  == WRITE_DATA)
-			{
-				logDebug("WRITE_DATA");
-			}
-
-			if (ReadWriteCommand  == COMMAND_EXEC)
-			{
-				logDebug("COMMAND_EXEC");
-			}
-		}
-
-	}
-
-}
-
+				}//CRC
+			}//DATALENGTH_MAX
+		}//PACKAGE_BEGIN
+	}//ParsingData.IsDataReadyReadFromBuffer
+}//f
 
 void Output_ON()
 {
@@ -774,7 +809,7 @@ int main(void)
 
  	delay_ms(100);
     GPIOC->BSRR =  GPIO_BSRR_BS13;//ON CPU
-    //GPIOB->BSRR =  GPIO_BSRR_BS8;//12 V for Mosfet
+    GPIOB->BSRR =  GPIO_BSRR_BS8;//12 V for Mosfet
     logDebug("System ON");
 
 
