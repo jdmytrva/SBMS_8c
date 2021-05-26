@@ -205,7 +205,7 @@ struct StructDataFromBatteryCells
 	uint8_t  BatVoltLowerMin_Status;
 
 };
-#define 	ID_MAX_COUNT 4
+#define 	ID_MAX_COUNT 8
 struct StructDataFromBatteryCells CellsDatabase[ID_MAX_COUNT];
 
 struct BatteryStruct

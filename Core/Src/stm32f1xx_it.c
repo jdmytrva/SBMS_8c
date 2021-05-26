@@ -259,7 +259,7 @@ void USART1_IRQHandler(void)
 		  //logDebug("Length");
 		  ParsingData.IsPassedPackageLengthFlag = 1;
 		  bufferUart1.rx_buffer[bufferUart1.rx_wr_index++] = data; //считываем данные в буфер, инкрементируя хвост буфера
-		  ParsingData.Length = data;
+		  ParsingData.Length = data+1+1;
 
 		  if (bufferUart1.rx_wr_index == RX_BUFFER_SIZE) bufferUart1.rx_wr_index=0; //идем по кругу
 		  if (++bufferUart1.rx_counter == RX_BUFFER_SIZE) //переполнение буфера

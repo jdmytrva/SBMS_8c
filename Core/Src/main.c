@@ -706,13 +706,14 @@ void TIM7_Callback()
 			Slave.Data_length = getCharFromBufferUART1();
 			Slave.Package[0] = PACKAGE_BEGIN;
 			Slave.Package[1] = Slave.Data_length;
+			//logDebugD("Slave.Data_length  ",Slave.Data_length,0);
 			if (Slave.Data_length <= DATALENGTH_MAX)
 			{
 				uint8_t i=0;
 				for(i = 2; i<=Slave.Data_length+1;i++)
 				{
 					Slave.Package[i] = getCharFromBufferUART1();
-					logDebugD("",Slave.Package[i],0)
+					//logDebugD("pack ",Slave.Package[i],0)
 				}
 				Slave.DataCRC = Slave.Package[i-2];
 				//logDebugD("CRC1",Slave.Package[i-2],0);
@@ -817,6 +818,11 @@ int main(void)
  	delay_ms(1000);
 
  	flash_read_block();
+
+ 	//CalibrationFactoryWriteToFlash();;
+ 	//SettingsFactoryWriteToFlash();
+ 	//DataWhenPowerOff_Factory_WriteToFlash();
+
 
  	if (LoggingData.RecordsQuantity>=MAX_LOG_ITEMS) LoggingData.RecordsQuantity = 0;
  	EEpromReadStatus = ReadFromFlash();
