@@ -18,7 +18,7 @@
 #include "Eeprom.h"
 #define PACKAGE_BEGIN 0xFE
 
-#define NUMBER_OF_CHANNELS 9
+#define NUMBER_OF_CHANNELS 12
 __IO uint16_t RegularConvData[NUMBER_OF_CHANNELS] ;
 
 
@@ -214,6 +214,8 @@ struct BatteryStruct
 	volatile int16_t Current;
 	volatile uint16_t Current_Charge;
 	volatile uint16_t Current_Load;
+	volatile uint8_t LowBattery;
+
 };
 struct BatteryStruct Battery;
 volatile uint8_t OverChargeStatus;

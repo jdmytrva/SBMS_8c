@@ -28,5 +28,9 @@ int32_t RunningAverageU1(int32_t newValue);
 int32_t RunningAverageU2(int32_t newValue);
 int32_t RunningAverageU3(int32_t newValue);
 int32_t RunningAverageU4(int32_t newValue);
+int32_t RunningAverageU5(int32_t newValue);
+int32_t RunningAverageU6(int32_t newValue);
+int32_t RunningAverageU7(int32_t newValue);
+int32_t RunningAverageU8(int32_t newValue);
 
 #endif

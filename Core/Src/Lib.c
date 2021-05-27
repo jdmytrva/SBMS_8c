@@ -524,3 +524,40 @@ int32_t RunningAverageU4(int32_t newValue)
 	filteredlValueU4 += (newValue - filteredlValueU4) * k;
 	return filteredlValueU4/10;
 }
+
+int32_t RunningAverageU5(int32_t newValue)
+{
+	int8_t k = 1;  // 1 - 10
+	newValue = newValue*10;
+	static int32_t filteredlValueU5 = 0;
+	filteredlValueU5 += (newValue - filteredlValueU5) * k;
+	return filteredlValueU5/10;
+}
+
+int32_t RunningAverageU6(int32_t newValue)
+{
+	int8_t k = 1;  // 1 - 10
+	newValue = newValue*10;
+	static int32_t filteredlValueU6 = 0;
+	filteredlValueU6 += (newValue - filteredlValueU6) * k;
+	return filteredlValueU6/10;
+}
+
+int32_t RunningAverageU7(int32_t newValue)
+{
+	int8_t k = 1;  // 1 - 10
+	newValue = newValue*10;
+	static int32_t filteredlValueU7 = 0;
+	filteredlValueU7 += (newValue - filteredlValueU7) * k;
+	return filteredlValueU7/10;
+}
+
+int32_t RunningAverageU8(int32_t newValue)
+{
+	int8_t k = 1;  // 1 - 10
+	newValue = newValue*10;
+	static int32_t filteredlValueU8 = 0;
+	filteredlValueU8 += (newValue - filteredlValueU8) * k;
+	return filteredlValueU8/10;
+}
+
