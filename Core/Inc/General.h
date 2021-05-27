@@ -30,17 +30,11 @@ struct StructCalibrationValuetoSaveInFlash
 	uint32_t CRC_data;
 	uint32_t CRC_AddresInEEprom;
 
-	uint32_t Calibration0ValueForCurrent;
-	uint32_t Calibration0ValueForCurrent_AddresInEEprom;
-
 	uint32_t CalibrationValueForCurrent1;
 	uint32_t CalibrationValueForCurrent1_AddresInEEprom;
 
 	uint32_t CalibrationValueForCurrent2;
 	uint32_t CalibrationValueForCurrent2_AddresInEEprom;
-
-	uint32_t CalibrationValueForCurrent3;
-	uint32_t CalibrationValueForCurrent3_AddresInEEprom;
 
 	uint32_t CalibrationValueForVoltage1;
 	uint32_t CalibrationValueForVoltage1_AddresInEEprom;
@@ -54,8 +48,14 @@ struct StructCalibrationValuetoSaveInFlash
 	uint32_t CalibrationValueForVoltage4;
 	uint32_t CalibrationValueForVoltage4_AddresInEEprom;
 
-	uint32_t ResistanceComp_MOSFET;
-	uint32_t ResistanceComp_MOSFET_AddresInEEprom;
+	uint32_t CalibrationValueForVoltage5;
+	uint32_t CalibrationValueForVoltage5_AddresInEEprom;
+
+	uint32_t CalibrationValueForVoltage6;
+	uint32_t CalibrationValueForVoltage6_AddresInEEprom;
+
+	uint32_t CalibrationValueForVoltage7;
+	uint32_t CalibrationValueForVoltage7_AddresInEEprom;
 };
 
 struct StructSettingsValuetoSaveInFlash
@@ -119,6 +119,7 @@ struct StructValuetoSaveInFlashWhenPowerOFF SaveDataWhenPowerOffFactory;
 
 volatile uint16_t  Count100mSecond;
 volatile uint16_t  Count10mSecond;
+volatile uint16_t  Count5mSecond;
 volatile uint16_t  Count1000mSecond;
 volatile uint16_t  CountAnymSecond;
 

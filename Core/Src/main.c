@@ -76,8 +76,8 @@ static void MX_USART3_UART_Init(void);
 #define MIN_VOLTAGE 280 //270
 #define MAX_VOLTAGE 360//3.6v
 #define RESISTANCE 10//mOm
-#define VOLTAGE_95_PERCENT 325//3.35v
-#define VOLTAGE_10_PERCENT 295 //3.00v
+#define VOLTAGE_95_PERCENT 330//3.30v
+#define VOLTAGE_10_PERCENT 285 //2.85v
 #elif LI_ION
 #define MIN_VOLTAGE 320//2.8v
 #define MAX_VOLTAGE 420//3.6v
@@ -352,23 +352,24 @@ void RestoreAfterCurrentShort()
 
 uint8_t flash = 1;
 uint32_t FlashVoltage = VOLTAGE_10_PERCENT*ID_MAX_COUNT*10;
+int32_t step;
 void VoltageLevelByLEDFlash()
 {
-   /* if (BatteryVoltage <= ID_MAX_COUNT*MIN_VOLTAGE) GPIO_ResetBits(GPIOA, GPIO_Pin_0);//LED OFF always
-    else
-    {
+   if (Battery.Voltage <= ID_MAX_COUNT*MIN_VOLTAGE) GPIOB->BSRR =  GPIO_BSRR_BR4;//LED OFF always
+   else
+   {
     	step =(10*ID_MAX_COUNT*(VOLTAGE_95_PERCENT-VOLTAGE_10_PERCENT))/100;//~30
-		if (BatteryVoltage*10>FlashVoltage)
+		if (Battery.Voltage*10>FlashVoltage)
 		{
-			GPIO_SetBits(GPIOA, GPIO_Pin_0);
+			GPIOB->BSRR =  GPIO_BSRR_BS4;
 		}else
 		{
-			 GPIO_ResetBits(GPIOA, GPIO_Pin_0);
+			GPIOB->BSRR =  GPIO_BSRR_BR4;
 		}
 		FlashVoltage = FlashVoltage+step;
 		if (FlashVoltage>VOLTAGE_95_PERCENT*ID_MAX_COUNT*10) FlashVoltage=VOLTAGE_10_PERCENT*ID_MAX_COUNT*10;
-    }
-    */
+   }
+
 }
 
 
@@ -440,18 +441,27 @@ void SysTick_Callback()//1 mc
 	BUT_Debrief();
 	TimerForReadyMeasurement_ms++;
 
-	if (Count10mSecond >= 5)
+	if (Count5mSecond >= 5)
 	{
-		Count10mSecond = 0;
+		Count5mSecond = 0;
 
 		adc_func();
 
+	}
+	if (Count10mSecond >= 10)
+	{
+
+		VoltageLevelByLEDFlash();
+		Count10mSecond = 0;
 	}
 
 	if (Count100mSecond >= 100)
 	{
 		if (Module16( Battery.Current) > 0 ) PowerOffTimesec = 0;
 		Count100mSecond = 0;
+
+
+
 	}
 
 	if (Count1000mSecond >= 1000)
@@ -482,21 +492,23 @@ void SysTick_Callback()//1 mc
 
 
 
-		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS4;// Battery level
-		else GPIOB->BSRR =  GPIO_BSRR_BR4;
+		//if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS4;// Battery level
+		//else GPIOB->BSRR =  GPIO_BSRR_BR4;
 
 		if (Battery.LowBattery == 0)
 		{
-			if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS6;//Fault
-			else GPIOB->BSRR =  GPIO_BSRR_BR6;
+			//if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS6;//Fault
+			//else GPIOB->BSRR =  GPIO_BSRR_BR6;
+
+			GPIOB->BSRR =  GPIO_BSRR_BS6;//Fault
 		}
 		else
 		{
 			GPIOB->BSRR =  GPIO_BSRR_BR6;
 		}
 
-		if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS7;//Charge/ Discharge
-		else GPIOB->BSRR =  GPIO_BSRR_BR7;
+		//if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS7;//Charge/ Discharge
+		//else GPIOB->BSRR =  GPIO_BSRR_BR7;
 
 		//if (time_sec%2==0) GPIOB->BSRR =  GPIO_BSRR_BS8;
 		//else GPIOB->BSRR =  GPIO_BSRR_BR8;
@@ -507,6 +519,7 @@ void SysTick_Callback()//1 mc
 		if (time_sec%10==0) Output_ON();
 		if (time_sec%15==0) Output_OFF();
 	}
+	Count5mSecond++;
 	Count10mSecond++;
 	Count100mSecond++;
 	Count1000mSecond++;
@@ -608,7 +621,7 @@ void adc_func()
 		SumU4 = 0;
 	}
 
-	Ut = (RegularConvData[6] * CalibrationData.CalibrationValueForVoltage4) / RegularConvData[11];
+	Ut = (RegularConvData[6] * CalibrationData.CalibrationValueForVoltage5) / RegularConvData[11];
 	Ut_m = Ut;
 	SumU5 =SumU5 + RunningAverageU5(Ut_m);
 	SumU5Counter ++;
@@ -619,7 +632,7 @@ void adc_func()
 		SumU5 = 0;
 	}
 
-	Ut = (RegularConvData[7] * CalibrationData.CalibrationValueForVoltage4) / RegularConvData[11];
+	Ut = (RegularConvData[7] * CalibrationData.CalibrationValueForVoltage6) / RegularConvData[11];
 	Ut_m = Ut;
 	SumU6 =SumU6 + RunningAverageU6(Ut_m);
 	SumU6Counter ++;
@@ -630,7 +643,7 @@ void adc_func()
 		SumU6 = 0;
 	}
 
-	Ut = (RegularConvData[8] * CalibrationData.CalibrationValueForVoltage4) / RegularConvData[11];
+	Ut = (RegularConvData[8] * CalibrationData.CalibrationValueForVoltage7) / RegularConvData[11];
 	Ut_m = Ut;
 	SumU7 =SumU7 + RunningAverageU7(Ut_m);
 	SumU7Counter ++;
@@ -641,7 +654,7 @@ void adc_func()
 		SumU7 = 0;
 	}
 
-	Ut = (RegularConvData[9] * CalibrationData.CalibrationValueForVoltage4) / RegularConvData[11];
+	Ut = (RegularConvData[9] * CalibrationData.CalibrationValueForVoltage7) / RegularConvData[11];
 	Ut_m = Ut;
 	SumU8 =SumU8 + RunningAverageU8(Ut_m);
 	SumU8Counter ++;
@@ -921,7 +934,7 @@ int main(void)
     logDebug("System ON");
 
 
-   //FactoryWriteToFlash_CRC();
+   FactoryWriteToFlash_CRC();
  	delay_ms(1000);
 
  	flash_read_block();

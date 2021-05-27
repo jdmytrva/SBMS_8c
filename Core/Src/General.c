@@ -56,23 +56,23 @@ struct StructCalibrationValuetoSaveInFlash CalibrationDataFactory=
 {
 		0,//CRC
 		ADDRESS_FLASH_CALIBRATTION,
-		0,//Calibration0ValueForCurrent
+		256,//CalibrationValueForCurrent1
 		ADDRESS_FLASH_CALIBRATTION+4,
-		73,//CalibrationValueForCurrent1
+		256,//CalibrationValueForCurrent2
 		ADDRESS_FLASH_CALIBRATTION+8,
-		73,//CalibrationValueForCurrent2 Resistor 6.2k || 4.7k  1%
+		256,//CalibrationValueForVoltage1
 		ADDRESS_FLASH_CALIBRATTION+12,
-		408,//CalibrationValueForCurrent3 Resistor 6.2k || 4.7k  1%
+		256,//CalibrationValueForVoltage2
 		ADDRESS_FLASH_CALIBRATTION+16,
-		256,//CalibrationValueForVoltage1 Resistor 8.2k 1%
+		256,//CalibrationValueForVoltage3
 		ADDRESS_FLASH_CALIBRATTION+20,
-		257,//CalibrationValueForVoltage2 Resistor 8.2k 1%
+		257,//CalibrationValueForVoltage4
 		ADDRESS_FLASH_CALIBRATTION+24,
-		258,//CalibrationValueForVoltage3 Resistor 8.2k 1%
+		258,//CalibrationValueForVoltage5
 		ADDRESS_FLASH_CALIBRATTION+28,
-		257,//CalibrationValueForVoltage4 mOm 116
+		257,//CalibrationValueForVoltage6
 		ADDRESS_FLASH_CALIBRATTION+32,
-		34,//ResistanceComp_MOSFET mOm
+		256,//CalibrationValueForVoltage7
 		ADDRESS_FLASH_CALIBRATTION+36
 };
 //=================================================
@@ -366,15 +366,15 @@ void InfoToUARTBeforeStart(void)
 {
 
 	logInfoD("CRC(Calibration) =",CalibrationData.CRC_data,0);
-	logInfoD("Calibration0ValueForCurrent =",CalibrationData.Calibration0ValueForCurrent ,0);
-	logInfoD("CalibrationValueForCurrent1 =",CalibrationData.CalibrationValueForCurrent1 ,0);
-	logInfoD("CalibrationValueForCurrent2 =",CalibrationData.CalibrationValueForCurrent2 ,0);
-	logInfoD("CalibrationValueForCurrent3 =",CalibrationData.CalibrationValueForCurrent3 ,0);
-	logInfoD("CalibrationValueForVoltage1 =",CalibrationData.CalibrationValueForVoltage1 ,0);
-	logInfoD("CalibrationValueForVoltage2 =",CalibrationData.CalibrationValueForVoltage2 ,0);
-	logInfoD("CalibrationValueForVoltage3 =",CalibrationData.CalibrationValueForVoltage3 ,0);
-	logInfoD("CalibrationValueForVoltage4 =",CalibrationData.CalibrationValueForVoltage4 ,0) ;
-	logInfoD("ResistanceComp_MOSFET =",CalibrationData.ResistanceComp_MOSFET ,0) ;
+	logInfoD("Calibration0ValueForCurrent =",CalibrationData.CalibrationValueForCurrent1 ,0);
+	logInfoD("CalibrationValueForCurrent1 =",CalibrationData.CalibrationValueForCurrent2 ,0);
+	logInfoD("CalibrationValueForCurrent2 =",CalibrationData.CalibrationValueForVoltage1 ,0);
+	logInfoD("CalibrationValueForCurrent3 =",CalibrationData.CalibrationValueForVoltage2 ,0);
+	logInfoD("CalibrationValueForVoltage1 =",CalibrationData.CalibrationValueForVoltage3 ,0);
+	logInfoD("CalibrationValueForVoltage2 =",CalibrationData.CalibrationValueForVoltage4 ,0);
+	logInfoD("CalibrationValueForVoltage3 =",CalibrationData.CalibrationValueForVoltage5 ,0);
+	logInfoD("CalibrationValueForVoltage4 =",CalibrationData.CalibrationValueForVoltage6 ,0) ;
+	logInfoD("ResistanceComp_MOSFET =",CalibrationData.CalibrationValueForVoltage7 ,0) ;
 	delay_ms(50);
 	logInfoD("CRC(SettingsData) =",SettingsData.CRC_data,0);
 	logInfoD("Option1(menu position) =",SettingsData.Option1 ,0);
@@ -440,6 +440,7 @@ volatile uint32_t vard3=0;
 
 volatile uint16_t  Count100mSecond = 0;
 volatile uint16_t  Count10mSecond = 0;
+volatile uint16_t  Count5mSecond = 0;
 volatile uint16_t  Count1000mSecond = 0;
 volatile uint16_t  CountAnymSecond = 0;
 
