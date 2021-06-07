@@ -68,6 +68,7 @@ static void MX_USART3_UART_Init(void);
 
 #define CELLS_MIN_VOLTAGE_TIMER_OFF_SEC 5 //sec
 
+#define NUMBER_OF_CELLS 8 //Number of cells
 #define MAX_NUMBERS_OF_LEVELS 5// 5 or 10 ..
 #define LIFEPO4 1
 #define LI_ION 0
@@ -76,8 +77,11 @@ static void MX_USART3_UART_Init(void);
 #define MIN_VOLTAGE 280 //270
 #define MAX_VOLTAGE 360//3.6v
 #define RESISTANCE 10//mOm
-#define VOLTAGE_95_PERCENT 330//3.30v
+#define VOLTAGE_95_PERCENT 335//3.30v
 #define VOLTAGE_10_PERCENT 285 //2.85v
+#define VOLTAGE_CHARGE_100_PERCENT 360//3.30v
+#define VOLTAGE_CHARGE_10_PERCENT 325 //2.85v
+
 #elif LI_ION
 #define MIN_VOLTAGE 320//2.8v
 #define MAX_VOLTAGE 420//3.6v
@@ -121,6 +125,10 @@ static void MX_ADC1_Init(void);
 /* USER CODE BEGIN 0 */
 char Version[] = "BMS 8c Ver 1.00 ";
 
+
+
+volatile uint16_t Voltage95Percent;
+volatile uint16_t Voltage10Percent;
 
 volatile uint32_t  time_sec = 0;
 volatile uint32_t  Timer_Sec = 0;
@@ -200,7 +208,7 @@ void OFF_Itself()
 	EEpromSaveStatus = 1;
 	logInfo("OFF All System");
 	delay_ms(100);
-    GPIOA->BSRR =  GPIO_BSRR_BR0;//OFF CPU
+	GPIOC->BSRR =  GPIO_BSRR_BR13;//OFF CPU
 
 }
 
@@ -351,14 +359,15 @@ void RestoreAfterCurrentShort()
 }
 
 uint8_t flash = 1;
-uint32_t FlashVoltage = VOLTAGE_10_PERCENT*ID_MAX_COUNT*10;
+uint32_t FlashVoltage =0 ;
 int32_t step;
 void VoltageLevelByLEDFlash()
 {
+
    if (Battery.Voltage <= ID_MAX_COUNT*MIN_VOLTAGE) GPIOB->BSRR =  GPIO_BSRR_BR4;//LED OFF always
    else
    {
-    	step =(10*ID_MAX_COUNT*(VOLTAGE_95_PERCENT-VOLTAGE_10_PERCENT))/100;//~30
+    	step =(10*ID_MAX_COUNT*(Voltage95Percent - Voltage10Percent))/100;//~30
 		if (Battery.Voltage*10>FlashVoltage)
 		{
 			GPIOB->BSRR =  GPIO_BSRR_BS4;
@@ -367,7 +376,7 @@ void VoltageLevelByLEDFlash()
 			GPIOB->BSRR =  GPIO_BSRR_BR4;
 		}
 		FlashVoltage = FlashVoltage+step;
-		if (FlashVoltage>VOLTAGE_95_PERCENT*ID_MAX_COUNT*10) FlashVoltage=VOLTAGE_10_PERCENT*ID_MAX_COUNT*10;
+		if (FlashVoltage>Voltage95Percent*ID_MAX_COUNT*10) FlashVoltage=Voltage10Percent*ID_MAX_COUNT*10;
    }
 
 }
@@ -518,6 +527,17 @@ void SysTick_Callback()//1 mc
 
 		if (time_sec%10==0) Output_ON();
 		if (time_sec%15==0) Output_OFF();
+
+		if (Battery.Current>2)
+		{
+			Voltage95Percent = VOLTAGE_CHARGE_100_PERCENT;
+			Voltage10Percent = VOLTAGE_CHARGE_10_PERCENT;
+		}
+		else
+		{
+			Voltage95Percent = VOLTAGE_95_PERCENT;
+			Voltage10Percent = VOLTAGE_10_PERCENT;
+		}
 	}
 	Count5mSecond++;
 	Count10mSecond++;
@@ -528,8 +548,8 @@ void SysTick_Callback()//1 mc
 
 void adc_func()
 {
-//	  PA0   ------> ADC1_IN0 [0] I
-//	  PA1   ------> ADC1_IN1 [1] I
+//	  PA0   ------> ADC1_IN0 [0] I charge
+//	  PA1   ------> ADC1_IN1 [1] I load
 //	  PA2   ------> ADC1_IN2 [2] U
 //	  PA3   ------> ADC1_IN3 [3] U
 //	  PA4   ------> ADC1_IN4 [4] U
@@ -552,7 +572,7 @@ void adc_func()
 
 	U_Controller = 491520 / RegularConvData[11];// Uref V/10;  1200 * 4096/ChVref
 
-	It = (RegularConvData[0] * CalibrationData.CalibrationValueForCurrent1) / RegularConvData[11] ;//  Current
+	It = (RegularConvData[1] * CalibrationData.CalibrationValueForCurrent1) / RegularConvData[11] ;//  Current
 	It_m = It;//middle_of_3Imax1(It);
 	SumI1 =SumI1 + RunningAverageI1(It_m);
 	SumI1Counter ++;
@@ -563,7 +583,7 @@ void adc_func()
 		SumI1 = 0;
 	}
 
-	It= (RegularConvData[1] * CalibrationData.CalibrationValueForCurrent2) / RegularConvData[11] ;//  Current
+	It= (RegularConvData[0] * CalibrationData.CalibrationValueForCurrent2) / RegularConvData[11] ;//  Current
 	It_m =It;// middle_of_3Imax2(It);
 	SumI2 =SumI2 + RunningAverageI2(It_m);
 	SumI2Counter ++;
@@ -573,8 +593,6 @@ void adc_func()
 		SumI2Counter = 0;
 		SumI2 = 0;
 	}
-
-
 
 	Ut= (RegularConvData[2] * CalibrationData.CalibrationValueForVoltage1) / RegularConvData[11];
 	Ut_m = Ut;//middle_of_3Umax1(Ut);
@@ -767,28 +785,60 @@ void MainScreenAnswer()
 	Master.Package[14]=arrayPointer_u16[0];
 	Master.Package[15]=arrayPointer_u16[1];
 
-	Master.Package[16]=95;
+	if (NUMBER_OF_CELLS == 4)
+	{
+		Master.Package[16]=95;
+		Master.Package[17]=On_off;
+		Master.Data_length = 19-1;
+		Master.DataCRC = calcCRC(Master.Package, Master.Data_length, 0);
+		Master.Package[18] = Master.DataCRC;
+		Master.Package[19] = 0x0A;
+		putDataInBufferUart1(Master.Package,Master.Data_length+2);
+	}
 
-	Master.Package[17]=On_off;
+	if (NUMBER_OF_CELLS == 8)
+	{
+		arrayPointer_u16 = (uint8_t*) &CellsDatabase[4].Voltage;
+		Master.Package[16]=arrayPointer_u16[0];
+		Master.Package[17]=arrayPointer_u16[1];
 
-	Master.Data_length = 19-1;
+		arrayPointer_u16 = (uint8_t*) &CellsDatabase[5].Voltage;
+		Master.Package[18]=arrayPointer_u16[0];
+		Master.Package[19]=arrayPointer_u16[1];
+
+		arrayPointer_u16 = (uint8_t*) &CellsDatabase[6].Voltage;
+		Master.Package[20]=arrayPointer_u16[0];
+		Master.Package[21]=arrayPointer_u16[1];
+
+		arrayPointer_u16 = (uint8_t*) &CellsDatabase[7].Voltage;
+		Master.Package[22]=arrayPointer_u16[0];
+		Master.Package[23]=arrayPointer_u16[1];
+
+		Master.Package[24]=95;
+		Master.Package[25]=On_off;
+		Master.Data_length = 27-1;
+
+		Master.DataCRC = calcCRC(Master.Package, Master.Data_length, 0);
+		Master.Package[26] = Master.DataCRC;
+		Master.Package[27] = 0x0A;
+		putDataInBufferUart1(Master.Package,Master.Data_length+2);
+
+	}
+
 
 	Master.Package[0] = PACKAGE_BEGIN;
 	Master.Package[1] = Master.Data_length;
 	Master.Package[2] = READ_DATA;
 	Master.Package[3] = MAIN_SCREEN;
-	Master.DataCRC = calcCRC(Master.Package, Master.Data_length, 0);
-	Master.Package[18] = Master.DataCRC;
-	Master.Package[19] = 0x0A;
-	putDataInBufferUart1(Master.Package,Master.Data_length+2);
+
 }
 
 void SystemInfoAnswer()
 {
-	Master.Package[4]=1;
-	Master.Package[5]=0;
+	Master.Package[4]=1;//version before point
+	Master.Package[5]=0;//version after point
 	Master.Package[6]=1;// 1- LIFEPO4, 2 - LIon
-	Master.Package[7]=8;//Number of cells
+	Master.Package[7]=NUMBER_OF_CELLS;//Number of cells
 	Master.Package[8]=0;
 	Master.Package[9]=0;
 	Master.Package[10]=0;
@@ -932,7 +982,7 @@ int main(void)
     GPIOC->BSRR =  GPIO_BSRR_BS13;//ON CPU
     GPIOB->BSRR =  GPIO_BSRR_BS8;//12 V for Mosfet
     logDebug("System ON");
-
+	FlashVoltage = Voltage10Percent*ID_MAX_COUNT*10;
 
    FactoryWriteToFlash_CRC();
  	delay_ms(1000);
@@ -1487,7 +1537,6 @@ void Error_Handler(void)
 }
 
 #ifdef  USE_FULL_ASSERT
-/**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
   * @param  file: pointer to the source file name
