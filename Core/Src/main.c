@@ -974,7 +974,7 @@ int main(void)
    logDebug("OUTPUT ON");
    //printToBufferUART1("Hello");
 
-
+	  GPIOC->BSRR =  GPIO_BSRR_BS15;
    Battery.LowBattery = 1;
   /* USER CODE END 2 */
 
@@ -986,6 +986,16 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  BUT_GetKey();
+
+
+	  if (LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_14))
+	  {
+		   logDebug("Short");
+		  delay_ms(1000);
+		  GPIOC->BSRR =  GPIO_BSRR_BR15;//restore current short
+		  delay_ms(10);
+		  GPIOC->BSRR =  GPIO_BSRR_BS15;
+	  }
 	  /*
 		f1 = SysTick->VAL;
 		  logDebugD("f1 ",f1,0);
@@ -1422,7 +1432,7 @@ static void MX_GPIO_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_13);
+  LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_13|LL_GPIO_PIN_15);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_12|LL_GPIO_PIN_13|LL_GPIO_PIN_14|LL_GPIO_PIN_15
@@ -1440,8 +1450,15 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_14|LL_GPIO_PIN_15;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_14;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_15;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
