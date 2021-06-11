@@ -526,7 +526,7 @@ void SysTick_Callback()//1 mc
 
 
 		if (time_sec%10==0) Output_ON();
-		if (time_sec%15==0) Output_OFF();
+		//if (time_sec%15==0) Output_OFF();
 
 		if (Battery.Current>2)
 		{
@@ -1026,6 +1026,7 @@ int main(void)
 
 	  GPIOC->BSRR =  GPIO_BSRR_BS15;
    Battery.LowBattery = 1;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
